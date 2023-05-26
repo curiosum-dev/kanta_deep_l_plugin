@@ -11,10 +11,10 @@ defmodule Kanta.DeepL.Plugin.FormComponent do
   alias Kanta.Translations
   alias Kanta.Translations.Message
 
-  alias Kanta.Translations.Locale.Finders.ListLocales
   alias Kanta.Translations.Locale.Finders.ListLocalesWithTranslatedMessage
 
   alias Kanta.Translations.SingularTranslations.Finders.GetSingularTranslation
+  alias Kanta.Translations.PluralTranslations.Finders.GetPluralTranslation
 
   def render(assigns) do
     ~H"""
@@ -63,7 +63,6 @@ defmodule Kanta.DeepL.Plugin.FormComponent do
   end
 
   def update(assigns, socket) do
-    %{entries: locales, metadata: _locales_metadata} = ListLocales.find()
     locales_with_translation = ListLocalesWithTranslatedMessage.find(assigns.message)
 
     socket =
@@ -86,7 +85,11 @@ defmodule Kanta.DeepL.Plugin.FormComponent do
       end
 
     source_text =
-      get_message_source_text(socket.assigns.message, String.to_integer(source_locale_id))
+      get_message_source_text(
+        socket.assigns.message,
+        String.to_integer(source_locale_id),
+        socket.assigns.translation
+      )
 
     {:noreply,
      update(
@@ -100,11 +103,28 @@ defmodule Kanta.DeepL.Plugin.FormComponent do
      )}
   end
 
-  def handle_event("submit", %{"translated_text" => translated}, socket) do
+  def handle_event(
+        "submit",
+        %{"translated_text" => translated},
+        %{assigns: %{message: %Message{message_type: :singular}}} = socket
+      ) do
     locale = socket.assigns.locale
     translation = socket.assigns.translation
 
     Translations.update_singular_translation(translation, %{"translated_text" => translated})
+
+    {:noreply, socket}
+  end
+
+  def handle_event(
+        "submit",
+        %{"translated_text" => translated},
+        %{assigns: %{message: %Message{message_type: :plural}}} = socket
+      ) do
+    locale = socket.assigns.locale
+    translation = socket.assigns.translation
+
+    Translations.update_plural_translation(translation, %{"translated_text" => translated})
 
     {:noreply, socket}
   end
@@ -132,9 +152,30 @@ defmodule Kanta.DeepL.Plugin.FormComponent do
     end
   end
 
-  defp get_message_source_text(%Message{id: message_id, message_type: :singular}, locale_id) do
+  defp get_message_source_text(
+         %Message{id: message_id, message_type: :singular},
+         locale_id,
+         _translation
+       ) do
     {:ok, translation} =
       GetSingularTranslation.find(filter: [message_id: message_id, locale_id: locale_id])
+
+    translation.translated_text || translation.original_text
+  end
+
+  defp get_message_source_text(
+         %Message{id: message_id, message_type: :plural},
+         locale_id,
+         translation
+       ) do
+    {:ok, translation} =
+      GetPluralTranslation.find(
+        filter: [
+          message_id: message_id,
+          locale_id: locale_id,
+          nplural_index: translation.nplural_index
+        ]
+      )
 
     translation.translated_text || translation.original_text
   end
