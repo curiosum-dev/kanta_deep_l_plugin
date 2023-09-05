@@ -5,7 +5,7 @@ defmodule Kanta.DeepL.Plugin.MixProject do
     [
       app: :kanta_deep_l_plugin,
       description: "Kanta plugin for using DeepL translator from the UI",
-      version: "0.1.0",
+      version: "0.1.1",
       elixir: "~> 1.14",
       package: package(),
       start_permanent: Mix.env() == :prod,
@@ -26,7 +26,7 @@ defmodule Kanta.DeepL.Plugin.MixProject do
       {:tesla, "~> 1.4"},
       {:jason, ">= 1.0.0"},
       {:phoenix_live_view, "~> 0.18"},
-      {:kanta, "~> 0.1.3", optional: true},
+      {:kanta, ">= 0.1.3", optional: true},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.3", only: [:dev], runtime: false},
       {:doctor, "~> 0.21.0", only: :dev},
