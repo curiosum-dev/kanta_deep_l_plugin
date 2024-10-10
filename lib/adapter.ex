@@ -26,6 +26,19 @@ defmodule Kanta.DeepL.Adapter do
     end
   end
 
+  def request_translations(source_lang, target_lang, texts) do
+    post("/v2/translate", %{
+      source_lang: source_lang,
+      target_lang: target_lang,
+      text: texts
+    })
+    |> case do
+      {:ok, %Tesla.Env{body: %{"translations" => translations}}} -> {:ok, translations}
+      {_, %Tesla.Env{body: body, status: status}} -> {:error, status, body}
+      error -> {:error, error}
+    end
+  end
+
   def usage do
     get("/v2/usage")
     |> case do
