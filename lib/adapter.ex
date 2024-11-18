@@ -13,14 +13,15 @@ defmodule Kanta.DeepL.Adapter do
 
   plug(Tesla.Middleware.JSON)
 
-  def request_translation(source_lang, target_lang, text) do
-    request_translations(source_lang, target_lang, [text])
+  def request_translation(source_lang, target_lang, text, context_name) do
+    request_translations(source_lang, target_lang, [text], context_name)
   end
 
-  def request_translations(source_lang, target_lang, texts) do
+  def request_translations(source_lang, target_lang, texts, context_name) do
     post("/v2/translate", %{
       source_lang: source_lang,
       target_lang: target_lang,
+      context: context_name,
       text: texts
     })
     |> case do

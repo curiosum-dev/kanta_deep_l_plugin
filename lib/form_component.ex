@@ -140,7 +140,8 @@ defmodule Kanta.DeepL.Plugin.FormComponent do
     case Adapter.request_translation(
            source_locale,
            String.upcase(translate_locale.iso639_code),
-           source_text
+           source_text,
+           if(message.context, do: message.context.name)
          ) do
       {:ok, translations} ->
         %{"text" => translated_text} = List.first(translations)
