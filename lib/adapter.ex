@@ -14,16 +14,7 @@ defmodule Kanta.DeepL.Adapter do
   plug(Tesla.Middleware.JSON)
 
   def request_translation(source_lang, target_lang, text) do
-    post("/v2/translate", %{
-      source_lang: source_lang,
-      target_lang: target_lang,
-      text: [text]
-    })
-    |> case do
-      {:ok, %Tesla.Env{body: %{"translations" => translations}}} -> {:ok, translations}
-      {_, %Tesla.Env{body: body, status: status}} -> {:error, status, body}
-      error -> {:error, error}
-    end
+    request_translations(source_lang, target_lang, [text])
   end
 
   def request_translations(source_lang, target_lang, texts) do
