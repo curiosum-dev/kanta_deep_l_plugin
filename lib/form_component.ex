@@ -108,11 +108,8 @@ defmodule Kanta.DeepL.Plugin.FormComponent do
         %{"translated_text" => translated},
         %{assigns: %{message: %Message{message_type: :singular}}} = socket
       ) do
-    locale = socket.assigns.locale
     translation = socket.assigns.translation
-
     Translations.update_singular_translation(translation, %{"translated_text" => translated})
-
     {:noreply, socket}
   end
 
@@ -121,11 +118,8 @@ defmodule Kanta.DeepL.Plugin.FormComponent do
         %{"translated_text" => translated},
         %{assigns: %{message: %Message{message_type: :plural}}} = socket
       ) do
-    locale = socket.assigns.locale
     translation = socket.assigns.translation
-
     Translations.update_plural_translation(translation, %{"translated_text" => translated})
-
     {:noreply, socket}
   end
 
