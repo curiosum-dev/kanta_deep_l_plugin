@@ -24,14 +24,14 @@ defmodule Kanta.DeepL.Plugin.TranslateAllComponent do
     singular_messages =
       Translations.list_singular_translations(
         filter: %{locale_id: socket.assigns.locale_id, translated_text: :is_null},
-        preloads: [:message],
+        preloads: [message: :context],
         skip_pagination: true
       )
 
     plural_messages =
       Translations.list_plural_translations(
         filter: %{locale_id: socket.assigns.locale_id, translated_text: :is_null},
-        preloads: [:message],
+        preloads: [message: :context],
         skip_pagination: true
       )
 
@@ -50,18 +50,23 @@ defmodule Kanta.DeepL.Plugin.TranslateAllComponent do
     {:noreply, socket}
   end
 
-  defp translate_all(messages, locale_code, update_fn) do
-    messages
-    |> Enum.chunk_every(@deepl_limit)
-    |> Enum.map(&translate_batch(&1, locale_code, update_fn))
+  defp translate_all(translations, locale_code, update_fn) do
+    translations
+    |> Enum.group_by(&if &1.message.context, do: &1.message.context.name)
+    |> Enum.reduce([], fn {context_name, same_context_translations}, acc ->
+      same_context_translations
+      |> Enum.chunk_every(@deepl_limit)
+      |> Enum.map(&translate_batch(&1, locale_code, update_fn, context_name))
+      |> then(&Kernel.++(acc, &1))
+    end)
   end
 
-  defp translate_batch(batch, locale_code, update_fn) do
+  defp translate_batch(batch, locale_code, update_fn, context_name) do
     source_lang = nil
     target_lang = String.upcase(locale_code)
     texts = Enum.map(batch, & &1.message.msgid)
 
-    case Adapter.request_translations(source_lang, target_lang, texts) do
+    case Adapter.request_translations(source_lang, target_lang, texts, context_name) do
       {:ok, translations} ->
         batch
         |> Enum.zip(translations)
